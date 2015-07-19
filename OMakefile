@@ -20,3 +20,5 @@ OCamlProgram(bin/ex2_3, ex2_3)
 OCamlProgram(bin/ex2_4, ex2_4)
 OCamlProgram(bin/ex2_5, ex2_5)
 OCamlProgram(bin/ex2_6, ex2_6)
+
+OCamlProgram(bin/ex3_2, ex3_2)
