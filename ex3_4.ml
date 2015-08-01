@@ -28,6 +28,7 @@ module type STRATEGY =
       | Tree of int * elem * tree * tree
     val singleton : elem -> tree
     val make : elem -> tree -> tree -> tree
+    val merge : tree -> tree -> tree
   end
     
 exception Not_found
@@ -43,16 +44,8 @@ module Heap
     let is_empty = function
       | Strategy.Empty -> true
       | _ -> false
-    let rec merge x y =
-      match x, y with
-      | h, Strategy.Empty -> h
-      | Strategy.Empty, h -> h
-      | (Strategy.Tree(_, x, a1, b1) as h1),
-	(Strategy.Tree(_, y, a2, b2) as h2) ->
-	 if Element.leq x y then
-	   Strategy.make x a1 (merge b1 h2)
-	 else
-	   Strategy.make y a2 (merge h1 b2)
+    let merge a b =
+      Strategy.merge a b
     let insert x h =
       merge (Strategy.singleton x) h
     let find_min = function
@@ -104,6 +97,16 @@ module LeftistStrategy
 	Tree(rank b + 1, x, a, b)
       else
 	Tree(rank a + 1, x, b, a)
+    let rec merge x y =
+      match x, y with
+      | h, Empty -> h
+      | Empty, h -> h
+      | (Tree(_, x, a1, b1) as h1),
+	(Tree(_, y, a2, b2) as h2) ->
+	 if Element.leq x y then
+	   make x a1 (merge b1 h2)
+	 else
+	   make y a2 (merge h1 b2)
   end
     
 module WeightBiasedLeftistStrategy
@@ -124,6 +127,18 @@ module WeightBiasedLeftistStrategy
 	Tree(weight a + weight b + 1, x, a, b)
       else
 	Tree(weight a + weight b + 1, x, b, a)
+    let rec merge x y =
+      let rec topdown k = function
+	| h, Empty -> k h
+	| Empty, h -> k h
+	| (Tree(_, x, a1, b1) as h1),
+	  (Tree(_, y, a2, b2) as h2) ->
+	   if Element.leq x y then
+	     topdown (fun z -> make x a1 z |> k) (b1, h2)
+	   else
+	     topdown (fun z -> make y a2 z |> k) (h1, b2)
+      in
+      topdown BatPervasives.identity (x, y)
   end
 
 module IntLeftistStrategy = LeftistStrategy (Int)
